@@ -12,16 +12,32 @@ jobs:
           repository: vial-kb/vial-qmk
           submodules: recursive
 
-      - name: Checkout Your Config
+      - name: Checkout Your Files
         uses: actions/checkout@v4
         with:
           path: local_repo
 
-      - name: Copy Keyboard Configuration
+      - name: Locate and Inject Keyboard Config
         run: |
-          cp -r local_repo/keyboards/rp2040_macropad keyboards/
+          mkdir -p keyboards/rp2040_macropad/keymaps/vial
 
-      - name: Install Toolchain
+          # Automatically find your config files regardless of where they were committed
+          RULES_PATH=$(find local_repo -name "rules.mk" | head -n 1)
+          CONFIG_PATH=$(find local_repo -name "config.h" | head -n 1)
+          VIAL_PATH=$(find local_repo -name "vial.json" | head -n 1)
+          KEYMAP_PATH=$(find local_repo -name "keymap.c" | head -n 1)
+
+          echo "Found rules.mk at: $RULES_PATH"
+          echo "Found config.h at: $CONFIG_PATH"
+          echo "Found vial.json at: $VIAL_PATH"
+          echo "Found keymap.c at: $KEYMAP_PATH"
+
+          cp "$RULES_PATH" keyboards/rp2040_macropad/
+          cp "$CONFIG_PATH" keyboards/rp2040_macropad/
+          cp "$VIAL_PATH" keyboards/rp2040_macropad/
+          cp "$KEYMAP_PATH" keyboards/rp2040_macropad/keymaps/vial/
+
+      - name: Install QMK Toolchain
         run: |
           python3 -m pip install --user qmk
           qmk setup -y vial-kb/vial-qmk
