@@ -5,7 +5,6 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: ghcr.io/vial-kb/vial-qmk
     steps:
       - name: Checkout Vial-QMK
         uses: actions/checkout@v4
@@ -13,20 +12,25 @@ jobs:
           repository: vial-kb/vial-qmk
           submodules: recursive
 
-      - name: Checkout Local Repo
+      - name: Checkout Your Config
         uses: actions/checkout@v4
         with:
           path: local_repo
 
-      - name: Inject Keyboard Config
+      - name: Copy Keyboard Configuration
         run: |
           cp -r local_repo/keyboards/rp2040_macropad keyboards/
+
+      - name: Install Toolchain
+        run: |
+          python3 -m pip install --user qmk
+          qmk setup -y vial-kb/vial-qmk
 
       - name: Compile UF2
         run: |
           make rp2040_macropad:vial
 
-      - name: Upload Artifact
+      - name: Upload UF2 Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rp2040_macropad_firmware
