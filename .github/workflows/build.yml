@@ -10,44 +10,40 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vial-kb/vial-qmk
+          ref: vial
           submodules: recursive
+          path: vial-qmk
 
-      - name: Checkout Your Files
+      - name: Checkout Your Config
         uses: actions/checkout@v4
         with:
           path: local_repo
 
-      - name: Locate and Inject Keyboard Config
+      - name: Locate and Inject Files
         run: |
-          mkdir -p keyboards/rp2040_macropad/keymaps/vial
+          TARGET_DIR="vial-qmk/keyboards/rp2040_macropad"
+          mkdir -p "$TARGET_DIR/keymaps/vial"
 
-          # Automatically find your config files regardless of where they were committed
-          RULES_PATH=$(find local_repo -name "rules.mk" | head -n 1)
-          CONFIG_PATH=$(find local_repo -name "config.h" | head -n 1)
-          VIAL_PATH=$(find local_repo -name "vial.json" | head -n 1)
-          KEYMAP_PATH=$(find local_repo -name "keymap.c" | head -n 1)
+          cp $(find local_repo -name "rules.mk" | head -n 1) "$TARGET_DIR/"
+          cp $(find local_repo -name "config.h" | head -n 1) "$TARGET_DIR/"
+          cp $(find local_repo -name "info.json" | head -n 1) "$TARGET_DIR/"
+          cp $(find local_repo -name "vial.json" | head -n 1) "$TARGET_DIR/"
+          cp $(find local_repo -name "keymap.c" | head -n 1) "$TARGET_DIR/keymaps/vial/"
 
-          echo "Found rules.mk at: $RULES_PATH"
-          echo "Found config.h at: $CONFIG_PATH"
-          echo "Found vial.json at: $VIAL_PATH"
-          echo "Found keymap.c at: $KEYMAP_PATH"
+          echo "Injected files into $TARGET_DIR:"
+          ls -la "$TARGET_DIR"
 
-          cp "$RULES_PATH" keyboards/rp2040_macropad/
-          cp "$CONFIG_PATH" keyboards/rp2040_macropad/
-          cp "$VIAL_PATH" keyboards/rp2040_macropad/
-          cp "$KEYMAP_PATH" keyboards/rp2040_macropad/keymaps/vial/
-
-      - name: Install QMK Toolchain
+      - name: Install Toolchain
         run: |
           python3 -m pip install --user qmk
-          qmk setup -y vial-kb/vial-qmk
 
       - name: Compile UF2
         run: |
+          cd vial-qmk
           make rp2040_macropad:vial
 
       - name: Upload UF2 Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rp2040_macropad_firmware
-          path: .build/*.uf2
+          path: vial-qmk/.build/*.uf2
