@@ -1,0 +1,33 @@
+  name: Build VIAL Firmware
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/vial-kb/vial-qmk
+    steps:
+      - name: Checkout Vial-QMK
+        uses: actions/checkout@v4
+        with:
+          repository: vial-kb/vial-qmk
+          submodules: recursive
+
+      - name: Checkout Local Repo
+        uses: actions/checkout@v4
+        with:
+          path: local_repo
+
+      - name: Inject Keyboard Config
+        run: |
+          cp -r local_repo/keyboards/rp2040_macropad keyboards/
+
+      - name: Compile UF2
+        run: |
+          make rp2040_macropad:vial
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rp2040_macropad_firmware
+          path: .build/*.uf2
