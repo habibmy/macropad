@@ -1,4 +1,4 @@
-  name: Build VIAL Firmware
+name: Build VIAL Firmware
 
 on: [push, workflow_dispatch]
 
